@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
 
 API_KEY = os.getenv("WEATHERAPI_KEY")
 BASE_URL = os.getenv("WEATHER_BASE_URL")

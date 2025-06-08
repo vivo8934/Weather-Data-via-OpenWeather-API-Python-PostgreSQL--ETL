@@ -1,29 +1,44 @@
-import requests
-from config import API_KEY, BASE_URL
 import os
+import logging
+import requests
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from config import API_KEY, BASE_URL
 
-FAILED_LOG_PATH = os.path.join("logs", "failures.log")
 os.makedirs("logs", exist_ok=True)
 
+logging.basicConfig(
+    filename='logs/weather_fetch.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+def fetch_with_retries(city, retries=2, delay=2):
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.get(BASE_URL, params={"key": API_KEY, "q": city}, timeout=10)
+            response.raise_for_status()
+            logging.info(f"Successfully fetched data for {city}")
+            return response.json()
+        except requests.RequestException as e:
+            logging.warning(f"Attempt {attempt} failed for {city}: {e}")
+            if attempt == retries:
+                logging.error(f"All retries failed for {city}")
+                return None
+            time.sleep(delay)
+
 def extract_weather_data(cities):
-    
     weather_data = []
-    with open(FAILED_LOG_PATH, "w") as log_file:
-        for city in cities:
-            params = {
-                "key": API_KEY,
-                "q": city
-            }
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_city = {executor.submit(fetch_with_retries, city): city for city in cities}
+        for future in as_completed(future_to_city):
+            city = future_to_city[future]
             try:
-                response = requests.get(BASE_URL, params=params, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                weather_data.append({
-                    "raw": data,
-                    "city": city
-                })
-            
-            except requests.RequestException as e:
-                log_file.write(f"{city}\n")
+                data = future.result()
+                if data:
+                    weather_data.append({"raw": data, "city": city})
+            except Exception as e:
+                logging.error(f"Unexpected error for {city}: {e}")
 
     return weather_data

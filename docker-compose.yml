@@ -1,0 +1,24 @@
+services:
+  weather_app:
+    build:
+      context: .
+    working_dir: /app/src
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    command: ["python", "main.py"]
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: weather_user
+      POSTGRES_PASSWORD: weather_pass
+      POSTGRES_DB: weather_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
