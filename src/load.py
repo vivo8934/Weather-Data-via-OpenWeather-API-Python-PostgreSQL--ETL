@@ -12,11 +12,11 @@ def load_to_postgres(df, table_name="weather_data"):
     conn, cur = None, None
     try:
         conn = psycopg2.connect(
-            host=os.getenv("PG_HOST"),
-            port=os.getenv("PG_PORT"),
-            database=os.getenv("PG_DB"),
-            user=os.getenv("PG_USER"),
-            password=os.getenv("PG_PASSWORD")
+            host=os.getenv("PG_HOST", "postgres_airflow"),
+            port=os.getenv("PG_PORT", 5432),
+            database=os.getenv("PG_DB", "weather_db"),
+            user=os.getenv("PG_USER", "weather_user"),
+            password=os.getenv("PG_PASSWORD", "your_password_here")
         )
         cur = conn.cursor()
 
