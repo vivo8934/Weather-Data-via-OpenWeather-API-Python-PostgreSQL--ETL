@@ -1,16 +1,20 @@
+import time
 from extract import extract_weather_data
 from transform import transform_weather_data
 from load import load_to_postgres
 from config import CITIES
-import logging
-import time
 
-def run_pipeline():
-    logging.info("Starting ETL pipeline for weather data")
-    start = time.time()
+def run_pipeline(cities=CITIES, logger=None):
+    logger = logger or __import__('logging').getLogger(__name__)
 
-    raw = extract_weather_data(CITIES)
+    logger.info("🔄 Extract step")
+    raw = extract_weather_data(cities)
+    logger.info(f"   → Fetched {len(raw)} records")
+
+    logger.info("🔄 Transform step")
     df = transform_weather_data(raw)
-    load_to_postgres(df)
+    logger.info(f"   → Transformed {len(df)} records")
 
-    logging.info(f"ETL pipeline completed in {round(time.time() - start, 2)}s")
+    logger.info("🔄 Load step")
+    load_to_postgres(df)
+    logger.info("   → Loaded {len(df)} records")

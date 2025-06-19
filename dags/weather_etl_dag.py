@@ -1,25 +1,35 @@
+# /opt/airflow/dags/weather_etl_dag.py
+
+import sys
+import os
+
+# 1) Ensure /opt/airflow/src is in the import path so we can import our modules
+sys.path.insert(
+    0,
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
+
 from airflow import DAG
-from datetime import datetime, timedelta
-from operators.weather_etl_operator import WeatherETLOperator  # Import your operator
+from airflow.utils.dates import days_ago
+from operators.weather_etl_operator import WeatherETLOperator
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    "owner": "airflow",
+    "depends_on_past": False,
+    "retries": 1,
 }
 
 with DAG(
-    dag_id='weather_etl',
+    dag_id="weather_etl",
     default_args=default_args,
-    description='ETL pipeline for weather data with custom operator',
-    schedule_interval='@daily',
-    start_date=datetime(2025,6,11),
+    start_date=days_ago(1),
+    schedule_interval="@daily",
     catchup=False,
-    max_active_runs=1,
-    tags=['weather', 'etl'],
+    tags=["weather", "etl"],
 ) as dag:
+    
 
-    run_etl = WeatherETLOperator(
-        task_id='run_weather_etl_pipeline',
+    run_weather = WeatherETLOperator(
+        task_id="run_weather_etl_pipeline",
+        # cities=None will use defaults from config.py in src/
     )
